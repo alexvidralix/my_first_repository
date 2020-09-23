@@ -1,0 +1,40 @@
+CREATE OR REPLACE PROCEDURE update_accounts AS
+    v_out VARCHAR2(50) := 'OK';
+BEGIN
+    MERGE INTO other_accounts e2
+    USING accounts h1 ON ( e2.id = h1.id )
+    WHEN MATCHED THEN UPDATE
+    SET e2.currency = h1.currency,
+        e2.available_balance = h1.available_balance,
+        e2.status = h1.status,
+        e2.inserted_date = h1.inserted_date,
+        e2.inserted_by = h1.inserted_date
+    WHEN NOT MATCHED THEN
+    INSERT (
+        id,
+        account_number,
+        currency,
+        iban,
+        account_class_id,
+        available_balance,
+        status,
+        customer_id )
+    VALUES
+        ( h1.id,
+          h1.account_number,
+          h1.currency,
+          h1.iban,
+          h1.account_class_id,
+          h1.available_balance,
+          h1.status,
+          h1.customer_id );
+
+    dbms_output.put_line(v_out);
+    return;
+EXCEPTION
+    WHEN OTHERS THEN
+        raise_application_error(-20001, 'An error was encountered - '
+                                        || sqlcode
+                                        || ' -ERROR- '
+                                        || sqlerrm);
+END;
