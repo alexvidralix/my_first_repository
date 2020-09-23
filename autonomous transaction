@@ -1,0 +1,32 @@
+CREATE OR replace PROCEDURE loger(code IN INTEGER, 
+                                      msg  IN VARCHAR2) 
+IS 
+  PRAGMA autonomous_transaction; 
+BEGIN 
+    INSERT INTO error_log 
+    VALUES     (code, 
+                msg); 
+
+    COMMIT; 
+EXCEPTION 
+  WHEN OTHERS THEN 
+             ROLLBACK; 
+END; 
+
+/*dummy*/
+CREATE OR replace PROCEDURE Dummy 
+IS 
+BEGIN 
+    INSERT INTO test 
+    VALUES     ('A', 
+                '2'); 
+
+    COMMIT; 
+EXCEPTION 
+  WHEN OTHERS THEN 
+             Loger(SQLCODE, SQLERRM); 
+
+             ROLLBACK; 
+
+             RAISE; 
+END; 
