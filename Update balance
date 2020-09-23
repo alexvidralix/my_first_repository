@@ -1,0 +1,32 @@
+CREATE OR REPLACE PROCEDURE update_available_balance AS v_out VARCHAR2(50):='OK';
+
+BEGIN
+MERGE INTO Accounts e2 USING
+  (WITH trans AS
+     (SELECT CASE
+                 WHEN debit_acc_id IS NULL THEN credit_acc_id
+                 ELSE debit_acc_id
+             END AS id1,
+             sum(amount) AS amount
+      FROM Transactions
+      WHERE inserted_date >= trunc(sysdate)-1
+        AND inserted_date < trunc(sysdate)
+      GROUP BY debit_acc_id,
+               credit_acc_id),
+        fin AS
+     (SELECT id1,
+             sum(amount) amount
+      FROM trans
+      GROUP BY id1)SELECT *
+   FROM fin) h1 ON (e2.id = h1.id1) WHEN MATCHED THEN
+UPDATE
+SET e2.available_balance = e2.available_balance + h1.amount;
+
+DBMS_OUTPUT.put_line(v_out);
+
+RETURN;
+
+
+EXCEPTION WHEN OTHERS THEN raise_application_error(-20001, 'An error was encountered - '||SQLCODE||' -ERROR- '||SQLERRM);
+
+END;
