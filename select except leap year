@@ -1,0 +1,42 @@
+WITH all_transaction AS
+  (SELECT id,
+          CASE
+              WHEN debit_acc_id IS NULL THEN credit_acc_id
+              ELSE debit_acc_id
+          END AS cust_id,
+          amount,
+          inserted_date,
+          EXTRACT(YEAR
+                  FROM to_date(inserted_date, 'DD-Mon-YYYY HH24:MI:SS')) AS year1
+   FROM transactions),
+     leap_years AS
+  (SELECT CUST_ID,
+          MAX(inserted_date),
+          CASE
+              WHEN
+                     (SELECT to_char(last_day(to_date('01-FEB-' || to_char(MAX(year1)), 'DD-MON-YYYY')), 'DD')
+                      FROM dual) = 29 THEN 'not ok'
+              ELSE 'ok'
+          END AS leap_year,
+          row_number() over(PARTITION BY max(CUST_ID)
+                            ORDER BY max(inserted_date) DESC) rn
+   FROM all_transaction
+   GROUP BY CUST_ID,
+            year1),
+     leaps AS
+  (SELECT cust_id
+   FROM leap_years
+   WHERE leap_year = 'ok'
+     AND rn =1 )
+SELECT a.cust_id,
+       a.amount
+FROM
+  (SELECT cust_id,
+          amount,
+          DENSE_RANK() OVER (PARTITION BY cust_id
+                             ORDER BY amount DESC) AS TRANS_RANK
+   FROM all_transaction) A
+WHERE A.TRANS_RANK = 2
+  AND a.cust_id in
+    (SELECT cust_id
+     FROM leaps);
