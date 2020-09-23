@@ -1,0 +1,14 @@
+SELECT 
+t_result.id,
+t_result.long_description,
+t_result.address,
+t_result.parent_branch_id,
+tr.amount
+FROM
+  (SELECT id,
+          long_description,
+          address,
+          parent_branch_id
+   FROM Branches START WITH id =2 CONNECT BY
+   PRIOR parent_branch_id = id) t_result
+LEFT JOIN Transactions tr ON tr.transaction_branch_id = t_result.id
