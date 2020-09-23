@@ -1,0 +1,39 @@
+CREATE OR REPLACE FUNCTION wrk_days (
+    x INTEGER
+) RETURN DATE AS
+
+    n_counter   NUMBER := 0;
+    v_dsc       VARCHAR(100);
+    sys_day     NUMBER := to_char(sysdate, 'DD');
+    start_date  DATE := trunc(sysdate);
+    end_date    DATE := start_date;
+BEGIN
+    WHILE n_counter < x LOOP
+        SELECT
+            substr((
+                SELECT
+                    LISTAGG(holiday_list, '') WITHIN GROUP(
+                        ORDER BY
+                            year, month
+                    ) AS dt
+                FROM
+                    holidays
+                WHERE
+                        year >= to_char(sysdate, 'YYYY')
+                    AND month >= to_char(sysdate, 'MM')
+            ),
+                   (sys_day + x),
+                   1)
+        INTO v_dsc
+        FROM
+            dual;
+
+        n_counter := n_counter + 1;
+        end_date := end_date + 1;
+    END LOOP;
+
+    IF v_dsc = 'H' THEN
+        end_date := end_date + 1;
+    END IF;
+    RETURN end_date;
+END wrk_days;
