@@ -1,0 +1,30 @@
+SELECT cu.first_name,
+       cu.last_name,
+       ca.id,
+       ca.card_number,
+       ac.account_class_id,
+       tr.amount,
+       COUNT(tr.amount),
+       tr.debit_acc_id,
+       tr.credit_acc_id
+FROM customers cu
+INNER JOIN cards ca ON ca.customer_id = cu.id
+INNER JOIN accounts ac ON ac.customer_id = ca.customer_id
+INNER JOIN transactions tr ON CASE
+                                  WHEN tr.debit_acc_id IS NULL THEN tr.credit_acc_id
+                                  ELSE tr.debit_acc_id
+                              END = ac.id
+INNER JOIN transactions tr ON CASE
+                                  WHEN tr.debit_acc_id IS NULL THEN tr.credit_acc_id
+                                  ELSE tr.debit_acc_id
+                              END = ac.id
+WHERE tr.amount >= 10.00
+GROUP BY cu.first_name,
+         cu.last_name,
+         ca.id,
+         ca.card_number,
+         ac.account_class_id,
+         tr.amount,
+         tr.debit_acc_id,
+         tr.credit_acc_id
+HAVING COUNT(tr.amount) >= 10
