@@ -1,0 +1,8 @@
+CREATE OR REPLACE TRIGGER status_acc BEFORE
+    UPDATE ON Accounts
+    FOR EACH ROW
+BEGIN
+    IF  :NEW.available_balance < 0.00
+    THEN :NEW.status := 'CLOSED';
+    end if;
+END;  
